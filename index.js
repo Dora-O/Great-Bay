@@ -21,12 +21,12 @@ const connection = mysql.createConnection({
   user: 'root',
 
   // Be sure to update with your own MySQL password!
-  password: '',
+  password: process.env.PASSWORD,
   database: 'great_bayDB',
 });
 
 const start = () => {
-    inquirer
+  inquirer
     .prompt([
       {
         type: 'list',
@@ -37,24 +37,21 @@ const start = () => {
     ])
     .then((answers) => {
       if (answers.prompt === 'Post') {
-        postItem();
+        postItem(answers);
       }
       else {
-        displayItems();
+        displayProducts();
       }
     });
   };
+
   connection.connect((err) => {
     if (err) throw err;
     start();
   });
 
 
-
-
 const displayProducts = () => {
-    
-    
     console.log('Selecting all products...\n');
     connection.query('SELECT * FROM products', (err, res) => {
       if (err) throw err;
@@ -64,7 +61,36 @@ const displayProducts = () => {
     });
   };
 
+const postItem = (answers) => {
+  inquirer
+  .prompt([
+    {
+      type: 'input',
+      name: 'item',
+      message: 'What is the name of this item?',
+    },
+    {
+      type: 'input',
+      name: 'startingBid',
+      message: 'How much would you like for the starting bid?',
+    }
+  ])
+  .then((answers) => {
+    console.log('Inserting a new product...\n');
 
-
-
-
+    const query = connection.query(
+      'INSERT INTO products SET ?',
+      {
+        item: `${answers.item}`,
+        starting_bid: `${answers.startingBid}`,
+        // highest_bid: `${answers.highestBid}`,
+      },
+      (err, res) => {
+        if (err) throw err;
+        console.log(`${res.affectedRows} product inserted!\n`);
+        // Call updateProduct AFTER the INSERT completes
+        displayProducts();
+      }
+    )
+  })
+};
